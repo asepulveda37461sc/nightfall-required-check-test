@@ -1,0 +1,11 @@
+name: Fake deploy
+# Stands in for a deploy run that already exists on a release commit (tag build or manual dispatch).
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: sleep 240
