@@ -15,4 +15,9 @@ jobs:
         run: |
           SHA='${{ github.event.pull_request.head.sha }}'
           ID=$(gh api "repos/${{ github.repository }}/check-runs" -f name='Nightfall DLP' -f head_sha="$SHA" -f status=in_progress --jq .id)
-          gh api -X PATCH "repos/${{ github.repository }}/check-runs/$ID" -f status=completed -f conclusion=success -f 'output[title]=Nightfall DLP' -f 'output[summary]=0 findings'
+          # the new check run is sometimes not visible yet (404); retry the update
+          for i in 1 2 3 4 5 6; do
+            gh api -X PATCH "repos/${{ github.repository }}/check-runs/$ID" -f status=completed -f conclusion=success -f 'output[title]=Nightfall DLP' -f 'output[summary]=0 findings' >/dev/null && exit 0
+            sleep 3
+          done
+          exit 1
