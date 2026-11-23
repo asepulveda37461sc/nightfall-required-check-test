@@ -20,6 +20,13 @@ secrets. `main` requires a check named `Nightfall DLP` from GitHub Actions, like
 It does not matter whether the manual run succeeded or was cancelled. Earlier runs triggered by a tag push do not
 cause it.
 
+**Second trigger: the same workflow runs again on the same commit.** The PR page only shows the checks of the
+**latest run of each workflow**. Because the scan result always goes into the oldest run on the commit, it disappears
+as soon as that workflow runs again on the same commit: for example after the PR is **closed and reopened**, or after
+a second tag build of the same deploy workflow. The API still reports the check as `success` (GraphQL
+`statusCheckRollup` lists it), but the page shows "Expected" and the PR is blocked. Re-running jobs of an existing
+run does not create a new run, so it does not trigger this.
+
 ### Evidence (one PR per case, each on its own new commit)
 
 | Case | Run on the commit before the PR | Result | PR |
@@ -31,6 +38,8 @@ cause it.
 | E | **manual run, succeeded** | **blocked, "Nightfall DLP" missing** | [#8](https://github.com/asepulveda37461sc/nightfall-required-check-test/pull/8) |
 | G | manual run, cancelled + **fix 1** | mergeable | [#9](https://github.com/asepulveda37461sc/nightfall-required-check-test/pull/9) |
 | F | manual run, cancelled + **fix 2** | mergeable | [#10](https://github.com/asepulveda37461sc/nightfall-required-check-test/pull/10) |
+| I | none, then the PR is **closed and reopened** | mergeable, then **blocked** (API still lists Nightfall as success) | [#12](https://github.com/asepulveda37461sc/nightfall-required-check-test/pull/12) |
+| J | same as I + **fix 1** | mergeable before and after | [#13](https://github.com/asepulveda37461sc/nightfall-required-check-test/pull/13) |
 
 In every case the check run itself exists and is `success` (`GET /repos/{owner}/{repo}/commits/{sha}/check-runs`).
 Only the PR does not count it.
@@ -63,7 +72,8 @@ Toy version: [`case-f`](https://github.com/asepulveda37461sc/nightfall-required-
 ### Workaround until it is fixed
 
 Don't run manual workflows on the commit you are about to open the release PR from. Tag-triggered runs are fine. If
-one already ran, any new commit on the branch clears it.
+one already ran, any new commit on the branch clears it. Don't close and reopen a PR to re-trigger its checks; if a
+check needs re-running, use "Re-run jobs" on the existing run.
 
 ## Problem 2: the scan fails with `PATCH .../check-runs/<id>: 404 Not Found`
 
