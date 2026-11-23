@@ -87,7 +87,7 @@ scan. Others report the same pattern for an immediate update after creating a ch
 [community discussion #21590](https://github.com/orgs/community/discussions/21590). It happened once in this repo
 too (case A, [#1](https://github.com/asepulveda37461sc/nightfall-required-check-test/pull/1)). The scanner image (`nightfall_code_scanner:v2.2.0`) does not retry.
 
-In one organisation using this setup it went from 0% of scan runs for 11 weeks to 0.5%, 1.2% and then 4.4% of runs
+In one organisation using this setup it went from 0% of scan runs for 13 weeks to 0.5%, 1.2% and then 4.4% of runs
 in three consecutive weeks of November 2026, with no change to the action or the scanner version. So it is worth
 handling now.
 
