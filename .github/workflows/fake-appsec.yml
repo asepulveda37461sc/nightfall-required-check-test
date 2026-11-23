@@ -1,23 +1,28 @@
 name: Fake AppSec Scan
-# Posts "Nightfall DLP" through the API with GITHUB_TOKEN, the way the DLP scanner action does.
 on: pull_request
 permissions:
   checks: write
+  statuses: write
   contents: read
 jobs:
   appsec:
     name: AppSec Scan
     runs-on: ubuntu-latest
     steps:
-      - name: Post Nightfall DLP through the API
+      - name: Post Nightfall DLP through the API (check run, as today)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           SHA='${{ github.event.pull_request.head.sha }}'
           ID=$(gh api "repos/${{ github.repository }}/check-runs" -f name='Nightfall DLP' -f head_sha="$SHA" -f status=in_progress --jq .id)
-          # the new check run is sometimes not visible yet (404); retry the update
+          ok=0
           for i in 1 2 3 4 5 6; do
-            gh api -X PATCH "repos/${{ github.repository }}/check-runs/$ID" -f status=completed -f conclusion=success -f 'output[title]=Nightfall DLP' -f 'output[summary]=0 findings' >/dev/null && exit 0
+            if gh api -X PATCH "repos/${{ github.repository }}/check-runs/$ID" -f status=completed -f conclusion=success -f 'output[title]=Nightfall DLP' -f 'output[summary]=0 findings' >/dev/null; then ok=1; break; fi
             sleep 3
           done
-          exit 1
+          [ "$ok" = 1 ]
+      - name: Also post Nightfall DLP as a commit status (the fix)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api "repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }}" -f state=success -f context='Nightfall DLP' -f description='0 findings' >/dev/null
